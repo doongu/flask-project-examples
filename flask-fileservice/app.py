@@ -1,24 +1,25 @@
 from flask import Flask
 from flask import render_template
 from flask import request
-from werkzeug.utils import secure_filename
+from flask import redirect, url_for
+
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileRequired
+
 app = Flask(__name__)
-#app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #파일 업로드 용량 제한 단위:바이트
+app.config['SECRET_KEY'] = "secret"
 
-#HTML 렌더링
-@app.route('/')
+class FileForm(FlaskForm):
+	files = FileField(validators=[FileRequired('업로드할 파일을 넣어주세요')])
+
+@app.route('/', methods = ['GET', 'POST'])
 def upload_page():
-	return render_template('upload.html')
-
-#파일 업로드 처리
-@app.route('/fileUpload', methods = ['GET', 'POST'])
-def upload_file():
-	if request.method == 'POST':
-		f = request.files['file']
-		f.save('./uploads/' + secure_filename(f.filename))
-		return render_template('check.html')
-	else:
-		return "Not"
+    form = FileForm()
+    if form.validate_on_submit():
+        f = form.files.data
+        f.save('./uploads/' + f.filename)
+        return render_template('check.html')
+    return render_template('upload.html', form=form)
 
 if __name__ == '__main__':
 	#서버 실행
